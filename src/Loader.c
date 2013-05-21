@@ -113,6 +113,14 @@ void adcTask() {
 	}
 }
 
+void serialRXEnable() {
+	UCSR1B |= (1 << RXEN1);
+}
+
+void serailRXDisable() {
+	UCSR1B &= ~(1 << RXEN1);
+}
+
 void uartTask() {
 	Endpoint_SelectEndpoint(
 			VirtualSerial_CDC_Interface.Config.DataINEndpoint.Address);
@@ -145,8 +153,10 @@ void uartTask() {
 			SetGlobalInterruptMask(CurrentGlobalInt);
 		}
 
-		if (RingBuffer_GetCount(&ringBuffer) < 10)
+		if (RingBuffer_GetCount(&ringBuffer) < 10) {
 			SET(TX_BUSY, LOW);
+			serialRXEnable();
+		}
 	}
 
 	int16_t w;
@@ -480,6 +490,8 @@ ISR(USART1_RX_vect) {
 		SET(TX_BUSY, HIGH);
 	else
 		SET(TX_BUSY, LOW);
+	if (ringBuffer.Count > 150)
+		serailRXDisable();
 }
 
 ISR(ADC_vect) {
