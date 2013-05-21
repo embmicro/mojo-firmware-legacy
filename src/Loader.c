@@ -171,6 +171,7 @@ void loaderTask() {
 	case START_LOAD:
 		disablePostLoad();
 		taskState = LOAD;
+		state = IDLE;
 		break;
 	case LOAD:
 		w = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
