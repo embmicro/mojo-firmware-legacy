@@ -12,6 +12,8 @@
 #include <avr/wdt.h>
 #include <avr/power.h>
 #include <avr/interrupt.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "Descriptors.h"
 

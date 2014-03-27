@@ -54,8 +54,8 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
-	.VendorID               = 0x03EB,
-	.ProductID              = 0x2144,
+	.VendorID               = 0x29DD,
+	.ProductID              = 0x8001,
 	.ReleaseNumber          = VERSION_BCD(00.01),
 
 	.ManufacturerStrIndex   = 0x01,
@@ -194,7 +194,7 @@ const USB_Descriptor_String_t PROGMEM ManufacturerString =
 {
 	.Header                 = {.Size = USB_STRING_LEN(11), .Type = DTYPE_String},
 
-	.UnicodeString          = L"Emb Micro"
+	.UnicodeString          = L"Embedded Micro"
 };
 
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
@@ -205,7 +205,7 @@ const USB_Descriptor_String_t PROGMEM ProductString =
 {
 	.Header                 = {.Size = USB_STRING_LEN(13), .Type = DTYPE_String},
 
-	.UnicodeString          = L"Mojo V2"
+	.UnicodeString          = L"Mojo V3"
 };
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"

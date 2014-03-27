@@ -33,6 +33,7 @@ uint8_t adcBuffer[512];
 RingBuffer_t ringBuffer;
 RingBuffer_t adcRingBuffer;
 volatile taskState_t taskState = SERVICE;
+volatile uint8_t timer;
 
 uint8_t adcPort = 0x0F;
 volatile uint8_t convPort = 0x0F;
@@ -312,13 +313,13 @@ void loaderTask() {
 void setupTimers() {
 	TCCR0A = 0x00; //no PWM
 	TCCR0B = (1 << CS02) | (0 << CS01) | (1 << CS00); // div 1024 clock
+	TIMSK0 = (1 << TOIE0); // enable interrupt
 }
 
 void setupHardware() {
 	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
-	wdt_disable();
-
+	//MCUSR &= ~(1 << WDRF);
+	//wdt_disable();
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);
 
@@ -468,20 +469,30 @@ void EVENT_USB_Device_ControlRequest(void) {
 	CDC_Device_ProcessControlRequest(&VirtualSerial_CDC_Interface);
 }
 
+void EVENT_CDC_Device_LineEncodingChanged(
+		USB_ClassInfo_CDC_Device_t * const CDCInterfaceInfo) {
+	if (CDCInterfaceInfo->State.LineEncoding.BaudRateBPS == 1200) {
+		*(uint16_t *) 0x0800 = 0x7777;
+		wdt_enable(WDTO_120MS);
+	}
+}
+
 void EVENT_CDC_Device_ControLineStateChanged(
 		USB_ClassInfo_CDC_Device_t * const CDCInterfaceInfo) {
+	static uint8_t falling = 0;
 	bool CurrentDTRState =
 			(CDCInterfaceInfo->State.ControlLineStates.HostToDevice
 					& CDC_CONTROL_LINE_OUT_DTR);
-	if (CurrentDTRState) {
-		if (!(TIFR0 & (1 << TOV0))) { // timer did not overflow
-			taskState = START_LOAD;
-			//SET(PROGRAM, LOW);
+	if (!CurrentDTRState) {
+		if (timer < 8) { // timer did not overflow
+			if (++falling >= 5)
+				taskState = START_LOAD;
+		} else {
+			timer = 0;
+			falling = 1;
 		}
-	} else {
-		TCNT0 = 0;
-		TIFR0 |= (1 << TOV0);
 	}
+
 }
 
 ISR(USART1_RX_vect) {
@@ -497,4 +508,8 @@ ISR(USART1_RX_vect) {
 ISR(ADC_vect) {
 	RingBuffer_Insert(&adcRingBuffer, ADCL );
 	RingBuffer_Insert(&adcRingBuffer, (convPort << 4) | ADCH );
+}
+
+ISR(TIMER0_OVF_vect) {
+	timer++;
 }
